@@ -1,0 +1,2292 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ColoringBook AI - Online Coloring Text Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bangers&family=Boogaloo&family=Caveat:wght@400;700&family=Comfortaa:wght@400;700&family=Dancing+Script:wght@400;700&family=Fredoka:wght@400;700&family=Gochi+Hand&family=Indie+Flower&family=Lilita+One&family=Luckiest+Guy&family=Modak&family=Nunito:wght@400;700;900&family=Pacifico&family=Patrick+Hand&family=Permanent+Marker&family=Righteous&family=Shadows+Into+Light&family=Shrikhand&family=Titan+One&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #ff8a00;
+      --accent-strong: #f97316;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --panel: #ffffff;
+      --line: #d9dee8;
+      --soft: #f6f7fb;
+      --paper: #ffffff;
+      --blue: #409eff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #f3f5f9;
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 54px 1fr;
+    }
+
+    .topbar {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid #e5e7eb;
+      backdrop-filter: blur(8px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: linear-gradient(135deg, #ff9a1f, #3abff8);
+      font-weight: 900;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      border-color: #b7c0ce;
+      background: #fbfcff;
+    }
+
+    .btn.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+    }
+
+    .btn.primary:hover {
+      background: var(--accent-strong);
+    }
+
+    .btn.icon {
+      width: 38px;
+      padding: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .editor-page {
+      min-height: 0;
+      padding: 14px 18px 16px;
+    }
+
+    .mode-tabs {
+      width: max-content;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 4px;
+      margin-bottom: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      background: #f0f2f5;
+    }
+
+    .mode-tab {
+      min-width: 140px;
+      height: 36px;
+      padding: 0 18px;
+      border-radius: 4px;
+      color: #4b5563;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .mode-tab.active {
+      color: var(--accent);
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 314px minmax(520px, 1fr);
+      gap: 18px;
+      min-height: 0;
+    }
+
+    .workspace[hidden] {
+      display: none;
+    }
+
+    .panel,
+    .canvas-shell {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .palette-panel {
+      max-height: calc(100vh - 160px);
+      padding: 0;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      overflow: hidden;
+    }
+
+    .palette-scroll {
+      min-height: 0;
+      padding: 16px 24px 0 16px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+    }
+
+    .palette-fixed-tools {
+      padding: 10px 24px 14px 16px;
+      background: #fff;
+      border-top: 1px solid #eef2f7;
+    }
+
+    .panel-title {
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(6, 32px);
+      gap: 10px 12px;
+      margin-bottom: 20px;
+    }
+
+    .swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+    }
+
+    .swatch.selected {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      box-shadow: inset 0 0 0 3px #111827;
+    }
+
+    .swatch.rainbow {
+      background: conic-gradient(#ff3b30, #ffcc00, #34c759, #00c7ff, #5856d6, #ff2d55, #ff3b30);
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 14px 0 8px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mini-tools {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: nowrap;
+      margin-top: 14px;
+    }
+
+    .round-tool {
+      width: 44px;
+      height: 44px;
+      border: 1px solid #e5e7eb;
+      border-radius: 50%;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      color: #64748b;
+      cursor: pointer;
+    }
+
+    .round-tool svg,
+    .effect-tool svg,
+    .brush-icon svg {
+      width: 19px;
+      height: 19px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .round-tool.active {
+      color: var(--accent);
+      background: #fff;
+      border-color: var(--accent);
+    }
+
+    .round-tool:disabled {
+      color: #d8dee8;
+      background: #fff;
+      cursor: default;
+    }
+
+    .download-popover {
+      position: relative;
+    }
+
+    .download-menu {
+      position: absolute;
+      left: 50%;
+      top: calc(100% + 8px);
+      z-index: 20;
+      width: 190px;
+      padding: 6px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+      transform: translateX(-50%);
+    }
+
+    .download-menu[hidden] {
+      display: none;
+    }
+
+    .download-menu button {
+      width: 100%;
+      min-height: 34px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 9px;
+      color: #111827;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .download-menu button:hover {
+      background: #f5f7fb;
+    }
+
+    .download-menu svg {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .effect-tools {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 0;
+    }
+
+    .effect-tool {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #e5e7eb;
+      border-radius: 50%;
+      background: #fff;
+      color: #64748b;
+      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.05);
+      cursor: pointer;
+    }
+
+    .effect-tool img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .effect-tool.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .effect-badge {
+      position: relative;
+    }
+
+    .effect-badge::after {
+      content: "";
+      position: absolute;
+      right: 2px;
+      bottom: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+
+    .tool-combo {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      grid-template-columns: repeat(2, 18px);
+      grid-template-rows: repeat(2, 18px);
+      gap: 3px;
+      align-content: center;
+      justify-content: center;
+      padding: 3px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .tool-combo img {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      object-fit: cover;
+    }
+
+    .tool-combo::after {
+      content: "+";
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 16px;
+      height: 16px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .brush-size {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+      margin-top: 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 22px;
+      color: #8d95a3;
+      background: #fff;
+    }
+
+    .brush-size input {
+      flex: 1;
+      accent-color: #ffffff;
+    }
+
+    .brush-icon {
+      color: #9aa5b3;
+      display: grid;
+      place-items: center;
+    }
+
+    .detect-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+
+    .effect-tool.pressed,
+    .round-tool.pressed,
+    .tool-combo.pressed {
+      transform: scale(0.96);
+      background: #fff7ed;
+    }
+
+    .tool-combo.active {
+      border-color: var(--accent);
+    }
+
+    .detect-toggle.off .toggle-pill {
+      background: #cbd5e1;
+    }
+
+    .detect-toggle.off .toggle-pill::after {
+      left: 2px;
+      right: auto;
+    }
+    .detect-toggle {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 19px;
+      background: #fff;
+      color: #475569;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .toggle-pill {
+      width: 36px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--accent);
+      position: relative;
+    }
+
+    .toggle-pill::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .canvas-shell {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+    }
+
+    .tool-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 66px;
+      padding: 13px 16px;
+      border-bottom: 1px solid #edf0f5;
+      background: #fafbfe;
+    }
+
+    .text-popover {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .new-badge {
+      min-width: 42px;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #ff0a73;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .new-badge[hidden] {
+      display: none;
+    }
+
+    .text-panel {
+      position: absolute;
+      top: 46px;
+      left: 0;
+      width: 340px;
+      max-height: calc(100vh - 145px);
+      overflow: auto;
+      padding: 14px;
+      border: 1px solid #d6dce8;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 18px 42px rgba(31, 41, 55, 0.14);
+      z-index: 10;
+      display: none;
+    }
+
+    .text-panel.open {
+      display: block;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .field label,
+    .range-head,
+    .toggle-label {
+      font-size: 12px;
+      color: #475569;
+      font-weight: 700;
+    }
+
+    .text-input,
+    .select-btn,
+    .number-input,
+    .hex-input {
+      height: 36px;
+      border: 1px solid #d8dee9;
+      border-radius: 7px;
+      background: #fff;
+      color: #111827;
+      outline: none;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 0 10px;
+    }
+
+    .text-field-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .text-input-list {
+      display: grid;
+      gap: 8px;
+      max-height: 178px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .text-input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .text-input-row .text-input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .text-input-row.active .text-input {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.12);
+    }
+
+    .text-row-btn {
+      width: 28px;
+      height: 28px;
+      border: 0;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .text-row-btn.remove {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #d8dee9;
+    }
+
+    .text-input:focus,
+    .number-input:focus,
+    .hex-input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.13);
+    }
+
+    .font-picker {
+      position: relative;
+    }
+
+    .select-btn {
+      width: 100%;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .font-sample {
+      font-size: 22px;
+      line-height: 1;
+      color: #111827;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .font-name {
+      color: #64748b;
+      font-size: 11px;
+      margin-left: 8px;
+      flex: none;
+    }
+
+    .font-menu {
+      position: absolute;
+      top: 40px;
+      left: 0;
+      right: 0;
+      max-height: 280px;
+      overflow: auto;
+      padding: 6px;
+      border: 1px solid #d8dee9;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.14);
+      z-index: 20;
+      display: none;
+    }
+
+    .font-menu.open {
+      display: block;
+    }
+
+    .font-option {
+      width: 100%;
+      min-height: 44px;
+      padding: 7px 9px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .font-option:hover,
+    .font-option.active {
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .toggles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid #d8dee9;
+      border-radius: 7px;
+      background: #fff;
+    }
+
+    .switch {
+      position: relative;
+      width: 34px;
+      height: 18px;
+      flex: none;
+    }
+
+    .switch input {
+      position: absolute;
+      opacity: 0;
+    }
+
+    .switch span {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: #cbd5e1;
+      transition: 0.18s;
+    }
+
+    .switch span::after {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      top: 2px;
+      left: 2px;
+      border-radius: 50%;
+      background: #fff;
+      transition: 0.18s;
+    }
+
+    .switch input:checked + span {
+      background: var(--accent);
+    }
+
+    .switch input:checked + span::after {
+      transform: translateX(16px);
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .color-control {
+      display: grid;
+      gap: 6px;
+    }
+
+    .color-row {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .color-row input[type="color"] {
+      width: 38px;
+      height: 36px;
+      border: 1px solid #d8dee9;
+      border-radius: 7px;
+      padding: 3px;
+      background: #fff;
+    }
+
+    .hex-input {
+      width: 100%;
+      padding: 0 8px;
+      text-transform: uppercase;
+    }
+
+    .range-field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .range-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 1fr 74px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .number-input {
+      width: 74px;
+      padding: 0 8px;
+    }
+
+    .panel-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .canvas-stage {
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      padding: 36px 40px;
+      overflow: auto;
+      background: #f4f6fa;
+    }
+
+    .paper-frame {
+      background: #fdfdfd;
+      padding: 6px;
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.05);
+    }
+
+    #editorCanvas {
+      width: min(34vw, 430px);
+      max-width: 100%;
+      height: auto;
+      aspect-ratio: 2 / 3;
+      border: 1px solid #3f3f46;
+      background: var(--paper);
+      cursor: default;
+      touch-action: none;
+    }
+
+    .record-mode {
+      min-height: calc(100vh - 146px);
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .record-mode[hidden] {
+      display: none;
+    }
+
+    .record-card {
+      width: 190px;
+      padding: 16px;
+      border: 1px solid #dfe4ee;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .record-thumb {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      border: 1px solid #bfc5d2;
+      background: #fff;
+      object-fit: cover;
+    }
+
+    .record-date {
+      margin: 14px 0 12px;
+      color: #000;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .record-actions {
+      display: grid;
+      gap: 8px;
+      justify-items: start;
+    }
+
+    .record-actions .btn {
+      min-height: 30px;
+      padding: 0 14px;
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .record-more {
+      width: 36px;
+      height: 36px;
+      margin-top: 8px;
+      border: 1px solid #dfe4ee;
+      border-radius: 7px;
+      background: #fff;
+      color: #6b7280;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%) translateY(-20px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #111827;
+      color: #fff;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+      transition: 0.18s;
+      z-index: 100;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .inline-note {
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    @media (max-width: 1180px) {
+      .workspace {
+        grid-template-columns: 314px minmax(460px, 1fr);
+      }
+    }
+
+    @media (max-width: 820px) {
+      .app {
+        grid-template-rows: auto 1fr;
+      }
+
+      .topbar {
+        height: auto;
+        padding: 12px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .editor-page {
+        padding: 10px;
+      }
+
+      .mode-tabs {
+        width: 100%;
+      }
+
+      .mode-tab {
+        min-width: 0;
+      }
+
+      .text-panel {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        top: 72px;
+        width: auto;
+      }
+
+      #editorCanvas {
+        width: min(86vw, 430px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">C</div>
+        <span>ColoringBook AI</span>
+      </div>
+    </header>
+
+    <main class="editor-page">
+      <div class="mode-tabs" role="tablist" aria-label="Coloring mode">
+        <button class="mode-tab active" id="onlineTab" type="button" role="tab" aria-selected="true" aria-controls="onlineMode">Online Coloring</button>
+        <button class="mode-tab" id="recordTab" type="button" role="tab" aria-selected="false" aria-controls="recordMode">Coloring Record</button>
+      </div>
+
+      <section class="workspace" id="onlineMode" role="tabpanel" aria-labelledby="onlineTab">
+        <aside class="panel palette-panel">
+          <div class="palette-scroll">
+            <h2 class="panel-title">Palette</h2>
+            <div class="swatches" id="mainSwatches"></div>
+
+            <div class="section-label"><span>Skin tone</span><span>Premium</span></div>
+            <div class="swatches" id="skinSwatches"></div>
+
+            <div class="section-label"><span>Hair color</span><span>Premium</span></div>
+            <div class="swatches" id="hairSwatches"></div>
+
+            <div class="section-label"><span>Eyes</span><span>Premium</span></div>
+            <div class="swatches" id="eyeSwatches"></div>
+
+            <div class="section-label"><span>Lips</span></div>
+            <div class="swatches" id="lipSwatches"></div>
+
+            <div class="section-label"><span>Sky</span><span>Premium</span></div>
+            <div class="swatches" id="skySwatches"></div>
+
+            <div class="section-label"><span>Forest</span><span>Premium</span></div>
+            <div class="swatches" id="forestSwatches"></div>
+          </div>
+
+          <div class="palette-fixed-tools">
+            <div class="effect-tools">
+              <button class="effect-tool" type="button" title="Eraser">
+                <img src="source-tool-0.png" alt="">
+              </button>
+              <button class="effect-tool" type="button" title="Paint bucket">
+                <img src="source-tool-1.png" alt="">
+              </button>
+              <button class="effect-tool active effect-badge" type="button" title="Brush">
+                <img src="source-tool-2.png" alt="">
+              </button>
+              <button class="effect-tool" type="button" title="Pen">
+                <img src="source-tool-3.png" alt="">
+              </button>
+              <button class="tool-combo" type="button" title="More tools">
+                <img src="source-tool-4.png" alt="">
+                <img src="source-tool-5.png" alt="">
+                <img src="source-tool-6.png" alt="">
+              </button>
+            </div>
+
+            <div class="mini-tools">
+              <button class="round-tool" type="button" title="Gallery">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="16" height="14" rx="2"/><path d="M7 5l1-2h6l1 2"/><circle cx="9" cy="11" r="2"/><path d="M5 17l4-4 3 3 2-2 3 3"/></svg>
+              </button>
+              <div class="download-popover">
+                <button class="round-tool" id="downloadMenuBtn" type="button" title="Save" aria-haspopup="menu" aria-expanded="false">
+                  <svg viewBox="0 0 24 24"><path d="M12 3v10"/><path d="M8 9l4 4 4-4"/><rect x="5" y="15" width="14" height="5" rx="1"/></svg>
+                </button>
+                <div class="download-menu" id="downloadMenu" role="menu" hidden>
+                  <button type="button" role="menuitem" data-download-action="save"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span>Save Coloring Record</span></button>
+                  <button type="button" role="menuitem" data-download-action="pdf"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 16h8"/><path d="M8 12h8"/></svg><span>Download PDF</span></button>
+                  <button type="button" role="menuitem" data-download-action="png"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-3.5-3.5L9 20"/></svg><span>Download PNG</span></button>
+                </div>
+              </div>
+              <button class="round-tool" type="button" title="Reset">
+                <svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2-5"/><path d="M19 4v5h-5"/></svg>
+              </button>
+              <button class="round-tool" type="button" title="Undo">
+                <svg viewBox="0 0 24 24"><path d="M9 8H4v5"/><path d="M4 13c2-5 11-7 16 0"/></svg>
+              </button>
+              <button class="round-tool" type="button" title="Redo" disabled>
+                <svg viewBox="0 0 24 24"><path d="M15 8h5v5"/><path d="M20 13c-2-5-11-7-16 0"/></svg>
+              </button>
+            </div>
+
+            <div class="brush-size">
+              <span class="brush-icon"><svg viewBox="0 0 24 24"><path d="M4 16c2-6 4-8 6-8 2 0 1 4-1 7s-1 4 1 4c3 0 5-5 8-5"/></svg></span>
+              <input type="range" value="45" min="1" max="100" aria-label="Brush size">
+              <span class="brush-icon"><svg viewBox="0 0 24 24"><path d="M4 17c3-8 6-11 9-11 3 0 2 5-1 10-2 4-1 5 2 5 3 0 4-4 6-6"/><path d="M17 14l3 1-1 3"/></svg></span>
+            </div>
+
+            <div class="detect-row">
+              <button class="round-tool active" type="button" title="Zoom">
+                <svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="5"/><path d="M14 14l5 5"/><path d="M10 7v6"/><path d="M7 10h6"/></svg>
+              </button>
+              <button class="detect-toggle" type="button"><span class="toggle-pill"></span> Detect Boundaries</button>
+            </div>
+          </div>
+        </aside>
+
+        <section class="canvas-shell">
+          <div class="tool-strip">
+            <div class="text-popover">
+              <button class="btn primary" id="toggleTextPanelBtn" type="button" title="Add text" aria-expanded="false">Add Text</button><span class="new-badge" id="addTextNewBadge">New</span>
+              <div class="text-panel" id="textPanel">
+                <div class="field">
+                  <div class="text-field-head">
+                    <label for="textContent">Text</label>
+                    <button class="text-row-btn add" id="addTextInputBtn" type="button" title="Add text input">+</button>
+                  </div>
+                  <div class="text-input-list" id="textInputList">
+                    <div class="text-input-row">
+                      <input class="text-input" id="textContent" data-text-input type="text" value="Your Text">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label>Font</label>
+                  <div class="font-picker" id="fontPicker">
+                    <button class="select-btn" id="fontSelectBtn" type="button">
+                      <span class="font-sample" id="fontPreview">Coloringbook</span>
+                      <span class="font-name" id="fontName">Luckiest Guy</span>
+                    </button>
+                    <div class="font-menu" id="fontMenu"></div>
+                  </div>
+                </div>
+
+                <div class="toggles">
+                  <label class="toggle"><span class="toggle-label">Italic</span><span class="switch"><input id="italicToggle" type="checkbox"><span></span></span></label>
+                  <label class="toggle"><span class="toggle-label">Bold</span><span class="switch"><input id="boldToggle" type="checkbox"><span></span></span></label>
+                  <label class="toggle"><span class="toggle-label">Hollow</span><span class="switch"><input id="hollowToggle" type="checkbox" checked><span></span></span></label>
+                </div>
+
+                <div class="color-grid">
+                  <div class="color-control">
+                    <label class="toggle-label" for="outlineColor">Outline color</label>
+                    <div class="color-row">
+                      <input id="outlineColor" type="color" value="#000000">
+                      <input class="hex-input" id="outlineHex" type="text" value="#000000">
+                    </div>
+                  </div>
+                  <div class="color-control">
+                    <label class="toggle-label" for="textColor">Text color</label>
+                    <div class="color-row">
+                      <input id="textColor" type="color" value="#000000">
+                      <input class="hex-input" id="textHex" type="text" value="#000000">
+                    </div>
+                  </div>
+                  <div class="color-control">
+                    <label class="toggle-label" for="backgroundColor">Background</label>
+                    <div class="color-row">
+                      <input id="backgroundColor" type="color" value="#ffffff">
+                      <input class="hex-input" id="backgroundHex" type="text" value="none">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="range-field" data-range="fontSize">
+                  <div class="range-head"><span>Font size</span><span>10 - 200</span></div>
+                  <div class="range-row">
+                    <input id="fontSizeRange" type="range" min="10" max="200" value="40">
+                    <input class="number-input" id="fontSizeNumber" type="number" min="10" max="200" value="40">
+                  </div>
+                </div>
+
+                <div class="range-field" data-range="outlineWidth">
+                  <div class="range-head"><span>Outline width</span><span>0 - 20</span></div>
+                  <div class="range-row">
+                    <input id="outlineWidthRange" type="range" min="0" max="20" value="0">
+                    <input class="number-input" id="outlineWidthNumber" type="number" min="0" max="20" value="0">
+                  </div>
+                </div>
+
+                <div class="range-field" data-range="angle">
+                  <div class="range-head"><span>Angle</span><span>-180 - 180</span></div>
+                  <div class="range-row">
+                    <input id="angleRange" type="range" min="-180" max="180" value="0">
+                    <input class="number-input" id="angleNumber" type="number" min="-180" max="180" value="0">
+                  </div>
+                </div>
+
+                <div class="range-field" data-range="letterSpacing">
+                  <div class="range-head"><span>Letter spacing</span><span>-10 - 100</span></div>
+                  <div class="range-row">
+                    <input id="letterSpacingRange" type="range" min="-10" max="100" value="0">
+                    <input class="number-input" id="letterSpacingNumber" type="number" min="-10" max="100" value="0">
+                  </div>
+                </div>
+
+                <div class="panel-actions">
+                  <button class="btn primary" id="addTextBtn" type="button">Add Text</button>
+                  <button class="btn" id="deleteTextBtn" type="button">Delete</button>
+                </div>
+                <p class="inline-note">Double-click text to edit. Drag corners to scale, top handle to rotate.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="canvas-stage">
+            <div class="paper-frame">
+              <canvas id="editorCanvas" width="1024" height="1536" aria-label="Coloring page editor"></canvas>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="record-mode" id="recordMode" role="tabpanel" aria-labelledby="recordTab" hidden>
+        <article class="record-card">
+          <img class="record-thumb" src="481ba53f88718b88f9e39198e16771b3.png" alt="Coloring record preview">
+          <div class="record-date">2026/06/11</div>
+          <div class="record-actions">
+            <button class="btn primary" id="recordPdfBtn" type="button">Download PDF</button>
+            <button class="btn primary" id="recordPngBtn" type="button">Download PNG</button>
+            <button class="record-more" type="button" aria-label="More options">...</button>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const canvas = document.getElementById("editorCanvas");
+    const ctx = canvas.getContext("2d");
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const logical = { width: 1024, height: 1536 };
+    const state = {
+      texts: [],
+      selectedId: null,
+      mode: "idle",
+      activeHandle: null,
+      dragStart: null,
+      baseImage: null,
+      baseImageReady: false,
+      nextId: 1,
+      panelOpen: false
+    };
+
+    const fonts = [
+      "Luckiest Guy", "Fredoka", "Bangers", "Modak", "Lilita One",
+      "Shrikhand", "Boogaloo", "Titan One", "Abril Fatface", "Righteous",
+      "Pacifico", "Dancing Script", "Caveat", "Permanent Marker", "Indie Flower",
+      "Gochi Hand", "Shadows Into Light", "Patrick Hand", "Comfortaa", "Nunito"
+    ];
+
+    const form = {
+      textContent: document.getElementById("textContent"),
+      italic: document.getElementById("italicToggle"),
+      bold: document.getElementById("boldToggle"),
+      hollow: document.getElementById("hollowToggle"),
+      outlineColor: document.getElementById("outlineColor"),
+      outlineHex: document.getElementById("outlineHex"),
+      textColor: document.getElementById("textColor"),
+      textHex: document.getElementById("textHex"),
+      backgroundColor: document.getElementById("backgroundColor"),
+      backgroundHex: document.getElementById("backgroundHex"),
+      fontSizeRange: document.getElementById("fontSizeRange"),
+      fontSizeNumber: document.getElementById("fontSizeNumber"),
+      outlineWidthRange: document.getElementById("outlineWidthRange"),
+      outlineWidthNumber: document.getElementById("outlineWidthNumber"),
+      angleRange: document.getElementById("angleRange"),
+      angleNumber: document.getElementById("angleNumber"),
+      letterSpacingRange: document.getElementById("letterSpacingRange"),
+      letterSpacingNumber: document.getElementById("letterSpacingNumber")
+    };
+
+    let currentFont = "Luckiest Guy";
+
+    function setupCanvas() {
+      canvas.width = logical.width * DPR;
+      canvas.height = logical.height * DPR;
+      canvas.style.aspectRatio = `${logical.width} / ${logical.height}`;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      loadBaseImage();
+      render();
+    }
+
+    function loadBaseImage() {
+      const img = new Image();
+      img.onload = () => {
+        state.baseImage = img;
+        state.baseImageReady = true;
+        render();
+      };
+      img.onerror = () => {
+        state.baseImageReady = false;
+        render();
+      };
+      img.src = "481ba53f88718b88f9e39198e16771b3.png";
+    }
+
+    function makeSwatches(id, colors, includeRainbow = false) {
+      const node = document.getElementById(id);
+      if (!node) return;
+      if (includeRainbow) {
+        const first = document.createElement("button");
+        first.className = "swatch rainbow";
+        first.type = "button";
+        first.title = "Rainbow";
+        node.appendChild(first);
+      }
+      colors.forEach((color) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "swatch";
+        btn.style.background = color;
+        btn.title = color;
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".swatch.selected").forEach((item) => item.classList.remove("selected"));
+          btn.classList.add("selected");
+          form.textColor.value = normalizeHex(color);
+          form.textHex.value = normalizeHex(color);
+          updateSelectedFromForm();
+        });
+        node.appendChild(btn);
+      });
+    }
+
+    function initSwatches() {
+      makeSwatches("mainSwatches", [
+        "#43148b", "#8a1c44", "#b36b00", "#ec3b7a", "#477c22",
+        "#09a2d0", "#582db6", "#bd2c63", "#f59e0b", "#fff22e", "#6dbb3e",
+        "#12b7df", "#7040c7", "#e33b7a", "#ffb13f", "#faf15b", "#8fce59",
+        "#55cce8", "#7b4be8", "#ec6d98", "#ffc473", "#fff38b", "#aad77b",
+        "#8bdcf0", "#a682ee", "#ef9bb7", "#ffd49a", "#fff6af", "#c3e0a8"
+      ], true);
+      makeSwatches("skinSwatches", ["#67331d", "#87481f", "#93653d", "#f1947b", "#ffd1b4", "#f7e7dc", "#b8713d", "#eca66e", "#ffc884", "#ffe1a8"]);
+      makeSwatches("hairSwatches", ["#050505", "#5b210b", "#a45727", "#c94a00", "#fb6508", "#ffb000", "#ffe35b", "#fff2bd", "#efefef", "#999999"]);
+      makeSwatches("eyeSwatches", ["#4a90e2", "#2352b7", "#459831", "#2f6e2e", "#bfa248", "#707125", "#8a4f3f", "#70453f", "#737373", "#2a151b"]);
+      makeSwatches("lipSwatches", ["#c0006f", "#e946a3", "#f5a6cf", "#ff0f73", "#f2b79f", "#57396f", "#2a0b42"]);
+      makeSwatches("skySwatches", ["#65aaf2", "#5e8cf0", "#5378df", "#4148bc", "#e4e1fb", "#cfc8ee", "#989ef0", "#7b4fe8", "#b8f3f6", "#9ed7f0"]);
+      makeSwatches("forestSwatches", ["#a7e45a", "#8ea960", "#20ad68", "#056450", "#b5c52d", "#f1ec45"]);
+      requestAnimationFrame(() => {
+        const firstSolid = document.querySelector("#mainSwatches .swatch:not(.rainbow)");
+        if (firstSolid) firstSolid.classList.add("selected");
+      });
+    }
+
+    function initFonts() {
+      const menu = document.getElementById("fontMenu");
+      fonts.forEach((font) => {
+        const opt = document.createElement("button");
+        opt.type = "button";
+        opt.className = "font-option";
+        opt.innerHTML = `<span class="font-sample" style="font-family:'${font}', sans-serif;">Coloringbook</span><span class="font-name">${font}</span>`;
+        opt.addEventListener("click", () => selectFont(font));
+        menu.appendChild(opt);
+      });
+      selectFont("Luckiest Guy", false);
+    }
+
+    function selectFont(font, update = true) {
+      currentFont = font;
+      document.getElementById("fontPreview").style.fontFamily = `'${font}', sans-serif`;
+      document.getElementById("fontName").textContent = font;
+      document.querySelectorAll(".font-option").forEach((btn) => {
+        btn.classList.toggle("active", btn.textContent.includes(font));
+      });
+      document.getElementById("fontMenu").classList.remove("open");
+      if (update) updateSelectedFromForm();
+    }
+
+    function defaultText() {
+      return {
+        id: state.nextId++,
+        text: "Your Text",
+        x: logical.width / 2,
+        y: 160,
+        font: "Luckiest Guy",
+        fontSize: 40,
+        color: "#000000",
+        outlineColor: "#000000",
+        outlineWidth: 0,
+        background: "none",
+        bold: false,
+        italic: false,
+        hollow: true,
+        angle: 0,
+        letterSpacing: 0,
+        scale: 1
+      };
+    }
+
+    function selectedText() {
+      return state.texts.find((item) => item.id === state.selectedId) || null;
+    }
+
+    function textInputNodes() {
+      return Array.from(document.querySelectorAll("[data-text-input]"));
+    }
+
+    function inputForTextId(id) {
+      return textInputNodes().find((input) => Number(input.dataset.textId) === id) || null;
+    }
+
+    function setActiveTextInput(id) {
+      document.querySelectorAll(".text-input-row.active").forEach((row) => row.classList.remove("active"));
+      const input = inputForTextId(id);
+      if (input) input.closest(".text-input-row").classList.add("active");
+    }
+
+    function styleFromForm(text) {
+      return {
+        text,
+        font: currentFont,
+        fontSize: num(form.fontSizeNumber.value, 10, 200),
+        color: form.textColor.value,
+        outlineColor: form.outlineColor.value,
+        outlineWidth: num(form.outlineWidthNumber.value, 0, 20),
+        background: parseBackground(),
+        bold: form.bold.checked,
+        italic: form.italic.checked,
+        hollow: form.hollow.checked,
+        angle: num(form.angleNumber.value, -180, 180),
+        letterSpacing: num(form.letterSpacingNumber.value, -10, 100)
+      };
+    }
+
+    function createTextForInput(input) {
+      const value = input.value.trim();
+      if (!value) return null;
+      const index = textInputNodes().indexOf(input);
+      const item = {
+        ...defaultText(),
+        ...styleFromForm(value),
+        x: logical.width / 2 + Math.max(0, index) * 26,
+        y: 160 + Math.max(0, index) * 54
+      };
+      state.texts.push(item);
+      input.dataset.textId = item.id;
+      state.selectedId = item.id;
+      setActiveTextInput(item.id);
+      return item;
+    }
+
+    function textItemFromInput(input) {
+      const id = Number(input.dataset.textId);
+      return state.texts.find((item) => item.id === id) || null;
+    }
+
+    function applyTextInput(input) {
+      const value = input.value.trim();
+      let item = textItemFromInput(input);
+      if (!item && value) item = createTextForInput(input);
+      if (!item) return;
+      if (!value) {
+        state.texts = state.texts.filter((text) => text.id !== item.id);
+        delete input.dataset.textId;
+        state.selectedId = null;
+        input.closest(".text-input-row").classList.remove("active");
+        render();
+        return;
+      }
+      item.text = value;
+      state.selectedId = item.id;
+      setActiveTextInput(item.id);
+      render();
+    }
+
+    function bindTextInput(input) {
+      if (input.dataset.bound === "true") return;
+      input.dataset.bound = "true";
+      input.addEventListener("focus", () => {
+        const item = textItemFromInput(input);
+        if (!item) return;
+        state.selectedId = item.id;
+        fillStyleControlsFromItem(item);
+        setActiveTextInput(item.id);
+        render();
+      });
+      ["input", "change"].forEach((eventName) => {
+        input.addEventListener(eventName, () => applyTextInput(input));
+      });
+    }
+
+    function removeTextInputRow(row) {
+      const input = row.querySelector("[data-text-input]");
+      const item = input ? textItemFromInput(input) : null;
+      if (item) {
+        state.texts = state.texts.filter((text) => text.id !== item.id);
+        if (state.selectedId === item.id) state.selectedId = null;
+      }
+      row.remove();
+      render();
+    }
+
+    function addTextInputRow(value = "Your Text", createObject = true) {
+      const row = document.createElement("div");
+      row.className = "text-input-row extra";
+      row.innerHTML = `<input class="text-input" data-text-input type="text" value="${escapeAttribute(value)}"><button class="text-row-btn remove" type="button" title="Remove text input">-</button>`;
+      row.querySelector(".remove").addEventListener("click", () => removeTextInputRow(row));
+      document.getElementById("textInputList").appendChild(row);
+      const input = row.querySelector("[data-text-input]");
+      bindTextInput(input);
+      if (createObject) createTextForInput(input);
+      input.focus();
+      input.select();
+      render();
+      return input;
+    }
+
+    function syncInputForItem(item) {
+      let input = inputForTextId(item.id);
+      if (!input) {
+        input = textInputNodes().find((node) => !node.dataset.textId) || addTextInputRow(item.text, false);
+        input.dataset.textId = item.id;
+        bindTextInput(input);
+      }
+      input.value = item.text;
+      setActiveTextInput(item.id);
+      return input;
+    }
+
+    function addText() {
+      const inputs = textInputNodes();
+      const validInputs = inputs.filter((input) => input.value.trim());
+      if (!validInputs.length) {
+        toast("Text cannot be empty.");
+        return;
+      }
+      validInputs.forEach((input) => {
+        const item = textItemFromInput(input) || createTextForInput(input);
+        if (item) item.text = input.value.trim();
+      });
+      setPanelOpen(true);
+      render();
+    }
+
+    function duplicateSelected() {
+      const item = selectedText();
+      if (!item) return toast("Select a text object first.");
+      const copy = { ...item, id: state.nextId++, x: item.x + 42, y: item.y + 42 };
+      state.texts.push(copy);
+      state.selectedId = copy.id;
+      const input = addTextInputRow(copy.text, false);
+      input.dataset.textId = copy.id;
+      fillFormFromSelection();
+      setPanelOpen(true);
+      render();
+    }
+
+    function deleteSelected() {
+      const item = selectedText();
+      if (!item) return;
+      const input = inputForTextId(item.id);
+      if (input) {
+        const row = input.closest(".text-input-row");
+        if (row && row.classList.contains("extra")) {
+          row.remove();
+        } else {
+          delete input.dataset.textId;
+          row.classList.remove("active");
+        }
+      }
+      state.texts = state.texts.filter((text) => text.id !== item.id);
+      state.selectedId = null;
+      render();
+    }
+
+    function fillStyleControlsFromItem(item) {
+      selectFont(item.font, false);
+      form.italic.checked = item.italic;
+      form.bold.checked = item.bold;
+      form.hollow.checked = item.hollow;
+      form.outlineColor.value = item.outlineColor;
+      form.outlineHex.value = item.outlineColor;
+      form.textColor.value = item.color;
+      form.textHex.value = item.color;
+      if (item.background === "none") {
+        form.backgroundHex.value = "none";
+      } else {
+        form.backgroundColor.value = item.background;
+        form.backgroundHex.value = item.background;
+      }
+      setRange("fontSize", item.fontSize);
+      setRange("outlineWidth", item.outlineWidth);
+      setRange("angle", item.angle);
+      setRange("letterSpacing", item.letterSpacing);
+    }
+
+    function fillFormFromSelection() {
+      const item = selectedText();
+      if (!item) {
+        return;
+      }
+      syncInputForItem(item);
+      fillStyleControlsFromItem(item);
+    }
+
+    function updateSelectedFromForm() {
+      const item = selectedText();
+      if (!item) return;
+      const input = inputForTextId(item.id) || form.textContent;
+      const text = input.value.trim();
+      if (!text) {
+        deleteSelected();
+        return;
+      }
+      Object.assign(item, styleFromForm(text));
+      if (input) input.value = item.text;
+      setActiveTextInput(item.id);
+      render();
+    }
+
+    function parseBackground() {
+      const raw = form.backgroundHex.value.trim().toLowerCase();
+      if (!raw || raw === "none" || raw === "transparent") return "none";
+      return normalizeHex(raw);
+    }
+
+    function setRange(name, value) {
+      const map = {
+        fontSize: [form.fontSizeRange, form.fontSizeNumber],
+        outlineWidth: [form.outlineWidthRange, form.outlineWidthNumber],
+        angle: [form.angleRange, form.angleNumber],
+        letterSpacing: [form.letterSpacingRange, form.letterSpacingNumber]
+      };
+      map[name][0].value = value;
+      map[name][1].value = value;
+    }
+
+    function syncRange(range, number, min, max) {
+      const apply = (value) => {
+        const next = num(value, min, max);
+        range.value = next;
+        number.value = next;
+        updateSelectedFromForm();
+      };
+      range.addEventListener("input", () => apply(range.value));
+      number.addEventListener("change", () => apply(number.value));
+      number.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          number.blur();
+        }
+      });
+    }
+
+    function syncColor(colorInput, hexInput) {
+      colorInput.addEventListener("input", () => {
+        hexInput.value = colorInput.value.toUpperCase();
+        updateSelectedFromForm();
+      });
+      hexInput.addEventListener("change", () => {
+        const raw = hexInput.value.trim();
+        if (hexInput === form.backgroundHex && ["none", "transparent", ""].includes(raw.toLowerCase())) {
+          hexInput.value = "none";
+          updateSelectedFromForm();
+          return;
+        }
+        const hex = normalizeHex(raw);
+        colorInput.value = hex;
+        hexInput.value = hex;
+        updateSelectedFromForm();
+      });
+      hexInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") hexInput.blur();
+      });
+    }
+
+    function bindForm() {
+      document.getElementById("onlineTab").addEventListener("click", () => setMode("online"));
+      document.getElementById("recordTab").addEventListener("click", () => setMode("record"));
+      document.getElementById("toggleTextPanelBtn").addEventListener("click", () => {
+        setPanelOpen(!state.panelOpen);
+      });
+      document.getElementById("addTextInputBtn").addEventListener("click", () => addTextInputRow());
+      document.getElementById("addTextBtn").addEventListener("click", addText);
+      document.getElementById("deleteTextBtn").addEventListener("click", deleteSelected);
+      bindTextInput(form.textContent);
+      bindPaletteTools();
+      document.getElementById("fontSelectBtn").addEventListener("click", () => {
+        document.getElementById("fontMenu").classList.toggle("open");
+      });
+      [form.italic, form.bold, form.hollow].forEach((node) => node.addEventListener("change", updateSelectedFromForm));
+      syncColor(form.outlineColor, form.outlineHex);
+      syncColor(form.textColor, form.textHex);
+      syncColor(form.backgroundColor, form.backgroundHex);
+      syncRange(form.fontSizeRange, form.fontSizeNumber, 10, 200);
+      syncRange(form.outlineWidthRange, form.outlineWidthNumber, 0, 20);
+      syncRange(form.angleRange, form.angleNumber, -180, 180);
+      syncRange(form.letterSpacingRange, form.letterSpacingNumber, -10, 100);
+      document.getElementById("recordPngBtn").addEventListener("click", downloadPNG);
+      document.getElementById("recordPdfBtn").addEventListener("click", downloadPDF);
+      document.addEventListener("keydown", handleKeys);
+      document.addEventListener("click", (event) => {
+        if (!document.getElementById("fontPicker").contains(event.target)) {
+          document.getElementById("fontMenu").classList.remove("open");
+        }
+      });
+    }
+
+
+    function bindPaletteTools() {
+      const toolButtons = Array.from(document.querySelectorAll(".effect-tool, .tool-combo"));
+      toolButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          toolButtons.forEach((item) => item.classList.remove("active", "pressed"));
+          button.classList.add("active", "pressed");
+          setTimeout(() => button.classList.remove("pressed"), 140);
+        });
+      });
+
+      document.querySelectorAll(".mini-tools .round-tool:not(#downloadMenuBtn), .detect-row .round-tool").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (button.disabled) return;
+          button.classList.toggle("active");
+          button.classList.add("pressed");
+          setTimeout(() => button.classList.remove("pressed"), 140);
+        });
+      });
+
+      const menuButton = document.getElementById("downloadMenuBtn");
+      const menu = document.getElementById("downloadMenu");
+      if (menuButton && menu) {
+        const closeMenu = () => {
+          menu.hidden = true;
+          menuButton.setAttribute("aria-expanded", "false");
+        };
+        menuButton.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const willOpen = menu.hidden;
+          menu.hidden = !willOpen;
+          menuButton.setAttribute("aria-expanded", String(willOpen));
+        });
+        menu.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const item = event.target.closest("[data-download-action]");
+          if (!item) return;
+          closeMenu();
+          if (item.dataset.downloadAction === "png") downloadPNG();
+          if (item.dataset.downloadAction === "pdf") downloadPDF();
+          if (item.dataset.downloadAction === "save") saveColoringRecord();
+        });
+        document.addEventListener("click", closeMenu);
+      }
+
+      const detect = document.querySelector(".detect-toggle");
+      if (detect) {
+        detect.setAttribute("aria-pressed", "true");
+        detect.addEventListener("click", () => {
+          const nextOn = detect.classList.toggle("off") === false;
+          detect.setAttribute("aria-pressed", String(nextOn));
+        });
+      }
+
+      const brushRange = document.querySelector(".brush-size input");
+      if (brushRange) {
+        brushRange.addEventListener("input", () => {
+          brushRange.style.setProperty("--value", brushRange.value);
+        });
+      }
+    }
+    function setMode(mode) {
+      const isRecord = mode === "record";
+      document.getElementById("onlineMode").hidden = isRecord;
+      document.getElementById("recordMode").hidden = !isRecord;
+      document.getElementById("onlineTab").classList.toggle("active", !isRecord);
+      document.getElementById("recordTab").classList.toggle("active", isRecord);
+      document.getElementById("onlineTab").setAttribute("aria-selected", String(!isRecord));
+      document.getElementById("recordTab").setAttribute("aria-selected", String(isRecord));
+      if (isRecord) {
+        setPanelOpen(false);
+      } else {
+        render();
+      }
+    }
+
+    function setPanelOpen(open) {
+      state.panelOpen = open;
+      document.getElementById("textPanel").classList.toggle("open", open);
+      document.getElementById("toggleTextPanelBtn").setAttribute("aria-expanded", String(open));
+      document.getElementById("addTextNewBadge").hidden = open;
+    }
+
+    function clearSelection() {
+      state.selectedId = null;
+      setPanelOpen(false);
+      fillFormFromSelection();
+      render();
+    }
+
+    function handleKeys(event) {
+      const tag = document.activeElement && document.activeElement.tagName;
+      const editingForm = ["INPUT", "TEXTAREA", "SELECT"].includes(tag);
+      if ((event.key === "Delete" || event.key === "Backspace") && state.selectedId && !editingForm) {
+        event.preventDefault();
+        deleteSelected();
+      }
+      if (event.key === "Escape") clearSelection();
+    }
+
+    function render(includeSelection = true, target = ctx) {
+      target.save();
+      target.clearRect(0, 0, logical.width, logical.height);
+      drawPage(target);
+      state.texts.forEach((item) => drawTextObject(target, item, includeSelection && item.id === state.selectedId));
+      target.restore();
+    }
+
+    function drawPage(target) {
+      target.save();
+      target.fillStyle = "#ffffff";
+      target.fillRect(0, 0, logical.width, logical.height);
+      if (state.baseImageReady && state.baseImage) {
+        target.drawImage(state.baseImage, 0, 0, logical.width, logical.height);
+      } else {
+        drawSampleLineArt(target);
+      }
+      target.restore();
+    }
+
+    function drawSampleLineArt(target) {
+      target.save();
+      target.strokeStyle = "#070707";
+      target.lineCap = "round";
+      target.lineJoin = "round";
+      target.lineWidth = 13;
+      drawDino(target);
+      target.restore();
+    }
+
+    function drawDino(target) {
+      target.beginPath();
+      target.moveTo(130, 392);
+      target.bezierCurveTo(190, 286, 300, 250, 395, 200);
+      target.bezierCurveTo(475, 158, 595, 185, 736, 153);
+      target.bezierCurveTo(782, 143, 768, 184, 733, 225);
+      target.bezierCurveTo(705, 260, 672, 290, 632, 314);
+      target.bezierCurveTo(632, 372, 596, 417, 555, 470);
+      target.bezierCurveTo(515, 521, 540, 542, 610, 590);
+      target.bezierCurveTo(682, 520, 738, 508, 810, 515);
+      target.bezierCurveTo(770, 560, 745, 604, 737, 657);
+      target.bezierCurveTo(697, 645, 654, 663, 603, 704);
+      target.lineTo(538, 657);
+      target.lineTo(468, 710);
+      target.lineTo(385, 628);
+      target.lineTo(319, 685);
+      target.lineTo(350, 740);
+      target.lineTo(300, 808);
+      target.stroke();
+      target.beginPath();
+      target.arc(545, 276, 52, 0, Math.PI * 2);
+      target.moveTo(530, 274);
+      target.arc(520, 274, 24, 0, Math.PI * 2);
+      target.stroke();
+      target.beginPath();
+      target.moveTo(130, 392);
+      target.bezierCurveTo(245, 410, 365, 398, 475, 365);
+      target.stroke();
+      target.beginPath();
+      target.moveTo(310, 620);
+      target.bezierCurveTo(220, 730, 220, 930, 340, 1012);
+      target.bezierCurveTo(445, 1084, 640, 1074, 725, 960);
+      target.bezierCurveTo(792, 870, 781, 718, 730, 644);
+      target.stroke();
+    }
+
+    function roundedRectPath(target, x, y, w, h, r) {
+      target.beginPath();
+      target.moveTo(x + r, y);
+      target.lineTo(x + w - r, y);
+      target.quadraticCurveTo(x + w, y, x + w, y + r);
+      target.lineTo(x + w, y + h - r);
+      target.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      target.lineTo(x + r, y + h);
+      target.quadraticCurveTo(x, y + h, x, y + h - r);
+      target.lineTo(x, y + r);
+      target.quadraticCurveTo(x, y, x + r, y);
+    }
+
+    function drawTextObject(target, item, selected) {
+      const metrics = measureTextObject(target, item);
+      target.save();
+      target.translate(item.x, item.y);
+      target.rotate(degToRad(item.angle));
+      target.scale(item.scale, item.scale);
+
+      if (item.background !== "none") {
+        target.fillStyle = item.background;
+        roundedRectPath(target, -metrics.width / 2 - 12, -metrics.height / 2 - 10, metrics.width + 24, metrics.height + 20, 6);
+        target.fill();
+      }
+
+      target.textAlign = "left";
+      target.textBaseline = "middle";
+      target.font = fontString(item);
+      target.lineJoin = "round";
+      const startX = -metrics.width / 2;
+      const y = 0;
+      let x = startX;
+      const strokeWidth = item.hollow ? Math.max(2, item.outlineWidth) : item.outlineWidth;
+      for (const char of item.text) {
+        const charWidth = target.measureText(char).width;
+        if (strokeWidth > 0) {
+          target.strokeStyle = item.outlineColor;
+          target.lineWidth = strokeWidth;
+          target.strokeText(char, x, y);
+        }
+        if (item.hollow) {
+          target.fillStyle = "#ffffff";
+        } else {
+          target.fillStyle = item.color;
+        }
+        target.fillText(char, x, y);
+        x += charWidth + item.letterSpacing;
+      }
+
+      if (selected) {
+        drawSelection(target, metrics);
+      }
+      target.restore();
+    }
+
+    function drawSelection(target, metrics) {
+      const pad = 10;
+      const x = -metrics.width / 2 - pad;
+      const y = -metrics.height / 2 - pad;
+      const w = metrics.width + pad * 2;
+      const h = metrics.height + pad * 2;
+      target.save();
+      target.strokeStyle = "#409eff";
+      target.lineWidth = 2;
+      target.setLineDash([7, 5]);
+      target.strokeRect(x, y, w, h);
+      target.setLineDash([]);
+      const handles = getLocalHandles(metrics);
+      Object.entries(handles).forEach(([key, point]) => {
+        target.beginPath();
+        if (key === "rotate") {
+          target.moveTo(0, y);
+          target.lineTo(0, point.y);
+          target.stroke();
+          target.fillStyle = "#fff";
+          target.strokeStyle = "#409eff";
+          target.lineWidth = 2;
+          target.arc(point.x, point.y, 8, 0, Math.PI * 2);
+        } else if (key === "duplicate") {
+          target.fillStyle = "#ff8a00";
+          target.strokeStyle = "#ff8a00";
+          target.lineWidth = 2;
+          target.roundRect(point.x - 9, point.y - 9, 18, 18, 4);
+          target.fill();
+          target.stroke();
+          target.strokeStyle = "#fff";
+          target.lineWidth = 2.4;
+          target.beginPath();
+          target.moveTo(point.x - 5, point.y);
+          target.lineTo(point.x + 5, point.y);
+          target.moveTo(point.x, point.y - 5);
+          target.lineTo(point.x, point.y + 5);
+          target.stroke();
+          return;
+        } else {
+          target.fillStyle = "#fff";
+          target.strokeStyle = "#409eff";
+          target.lineWidth = 2;
+          target.rect(point.x - 7, point.y - 7, 14, 14);
+        }
+        target.fill();
+        target.stroke();
+      });
+      target.restore();
+    }
+
+    function getLocalHandles(metrics) {
+      const pad = 10;
+      const x = -metrics.width / 2 - pad;
+      const y = -metrics.height / 2 - pad;
+      const w = metrics.width + pad * 2;
+      const h = metrics.height + pad * 2;
+      return {
+        nw: { x, y },
+        ne: { x: x + w, y },
+        sw: { x, y: y + h },
+        se: { x: x + w, y: y + h },
+        rotate: { x: 0, y: y - 42 },
+        duplicate: { x: x + w + 20, y: y - 20 }
+      };
+    }
+
+    function measureTextObject(target, item) {
+      target.save();
+      target.font = fontString(item);
+      let width = 0;
+      for (const char of item.text) {
+        width += target.measureText(char).width;
+      }
+      width += Math.max(0, item.text.length - 1) * item.letterSpacing;
+      const height = item.fontSize * 1.22;
+      target.restore();
+      return { width: Math.max(12, width), height };
+    }
+
+    function fontString(item) {
+      const style = item.italic ? "italic " : "";
+      const weight = item.bold ? "900 " : "400 ";
+      return `${style}${weight}${item.fontSize}px '${item.font}', sans-serif`;
+    }
+
+    function pointerPosition(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) * (logical.width / rect.width),
+        y: (event.clientY - rect.top) * (logical.height / rect.height)
+      };
+    }
+
+    function canvasPointerDown(event) {
+      const p = pointerPosition(event);
+      const hit = hitTest(p);
+      if (!hit) {
+        clearSelection();
+        return;
+      }
+      state.selectedId = hit.item.id;
+      if (hit.handle === "duplicate") {
+        duplicateSelected();
+        return;
+      }
+      setPanelOpen(true);
+      fillFormFromSelection();
+      const item = hit.item;
+      state.mode = hit.handle === "body" ? "move" : hit.handle === "rotate" ? "rotate" : "scale";
+      state.activeHandle = hit.handle;
+      state.dragStart = {
+        p,
+        x: item.x,
+        y: item.y,
+        angle: item.angle,
+        scale: item.scale,
+        distance: distance(p, { x: item.x, y: item.y })
+      };
+      canvas.setPointerCapture(event.pointerId);
+      render();
+    }
+
+    function canvasPointerMove(event) {
+      if (!state.dragStart || !state.selectedId) return;
+      const p = pointerPosition(event);
+      const item = selectedText();
+      if (!item) return;
+      if (state.mode === "move") {
+        item.x = state.dragStart.x + (p.x - state.dragStart.p.x);
+        item.y = state.dragStart.y + (p.y - state.dragStart.p.y);
+      }
+      if (state.mode === "scale") {
+        const nextDistance = distance(p, { x: item.x, y: item.y });
+        item.scale = Math.max(0.2, Math.min(5, state.dragStart.scale * (nextDistance / Math.max(1, state.dragStart.distance))));
+      }
+      if (state.mode === "rotate") {
+        const angle = Math.atan2(p.y - item.y, p.x - item.x) * 180 / Math.PI + 90;
+        item.angle = clamp(Math.round(angle), -180, 180);
+        setRange("angle", item.angle);
+      }
+      render();
+    }
+
+    function canvasPointerUp(event) {
+      if (canvas.hasPointerCapture(event.pointerId)) {
+        canvas.releasePointerCapture(event.pointerId);
+      }
+      state.mode = "idle";
+      state.activeHandle = null;
+      state.dragStart = null;
+      fillFormFromSelection();
+    }
+
+    function canvasDoubleClick(event) {
+      const p = pointerPosition(event);
+      const hit = hitTest(p);
+      if (!hit) return;
+      state.selectedId = hit.item.id;
+      fillFormFromSelection();
+      setPanelOpen(true);
+      const input = inputForTextId(hit.item.id) || form.textContent;
+      input.focus();
+      input.select();
+    }
+
+    function hitTest(point) {
+      for (let i = state.texts.length - 1; i >= 0; i--) {
+        const item = state.texts[i];
+        const metrics = measureTextObject(ctx, item);
+        const local = toLocal(point, item);
+        const handles = getLocalHandles(metrics);
+        for (const [name, hp] of Object.entries(handles)) {
+          const limit = name === "rotate" || name === "duplicate" ? 14 : 11;
+          if (Math.abs(local.x - hp.x) <= limit && Math.abs(local.y - hp.y) <= limit) {
+            return { item, handle: name };
+          }
+        }
+        const pad = 16;
+        if (
+          local.x >= -metrics.width / 2 - pad &&
+          local.x <= metrics.width / 2 + pad &&
+          local.y >= -metrics.height / 2 - pad &&
+          local.y <= metrics.height / 2 + pad
+        ) {
+          return { item, handle: "body" };
+        }
+      }
+      return null;
+    }
+
+    function toLocal(point, item) {
+      const dx = point.x - item.x;
+      const dy = point.y - item.y;
+      const angle = -degToRad(item.angle);
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      return {
+        x: (dx * cos - dy * sin) / item.scale,
+        y: (dx * sin + dy * cos) / item.scale
+      };
+    }
+
+    function saveColoringRecord() {
+      const out = exportCanvas();
+      const thumb = document.querySelector(".record-thumb");
+      const date = document.querySelector(".record-date");
+      if (thumb) thumb.src = out.toDataURL("image/png");
+      if (date) {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, "0");
+        const dd = String(now.getDate()).padStart(2, "0");
+        date.textContent = `${yyyy}/${mm}/${dd}`;
+      }
+      toast("Coloring record saved.");
+    }
+
+    function downloadPNG() {
+      const out = exportCanvas();
+      downloadData(out.toDataURL("image/png"), "coloringbook-text-art.png");
+      toast("PNG exported.");
+    }
+
+    function downloadPDF() {
+      const out = exportCanvas();
+      const jpeg = out.toDataURL("image/jpeg", 0.95);
+      const pdf = makePdf(jpeg, logical.width, logical.height);
+      const blob = new Blob([pdf], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      downloadData(url, "coloringbook-text-art.pdf");
+      setTimeout(() => URL.revokeObjectURL(url), 1200);
+      toast("PDF exported.");
+    }
+
+    function exportCanvas() {
+      const out = document.createElement("canvas");
+      out.width = logical.width * 2;
+      out.height = logical.height * 2;
+      const outCtx = out.getContext("2d");
+      outCtx.setTransform(2, 0, 0, 2, 0, 0);
+      render(false, outCtx);
+      return out;
+    }
+
+    function makePdf(jpegDataUrl, width, height) {
+      const binary = atob(jpegDataUrl.split(",")[1]);
+      const pageW = 612;
+      const pageH = Math.round(pageW * height / width);
+      const objects = [];
+      objects.push("<< /Type /Catalog /Pages 2 0 R >>");
+      objects.push("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+      objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /XObject << /Im0 5 0 R >> >> /Contents 4 0 R >>`);
+      const content = `q\n${pageW} 0 0 ${pageH} 0 0 cm\n/Im0 Do\nQ`;
+      objects.push(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+      objects.push(`<< /Type /XObject /Subtype /Image /Width ${width * 2} /Height ${height * 2} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${binary.length} >>\nstream\n${binary}\nendstream`);
+      let pdf = "%PDF-1.4\n";
+      const offsets = [0];
+      objects.forEach((obj, index) => {
+        offsets.push(pdf.length);
+        pdf += `${index + 1} 0 obj\n${obj}\nendobj\n`;
+      });
+      const xref = pdf.length;
+      pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+      offsets.slice(1).forEach((offset) => {
+        pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+      });
+      pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+      const bytes = new Uint8Array(pdf.length);
+      for (let i = 0; i < pdf.length; i++) bytes[i] = pdf.charCodeAt(i) & 0xff;
+      return bytes;
+    }
+
+    function downloadData(url, filename) {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+
+    function escapeAttribute(value) {
+      return String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function toast(message) {
+      const node = document.getElementById("toast");
+      node.textContent = message;
+      node.classList.add("show");
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => node.classList.remove("show"), 1800);
+    }
+
+    function num(value, min, max) {
+      return clamp(Number.parseFloat(value) || 0, min, max);
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function normalizeHex(value) {
+      let raw = String(value || "#000000").trim();
+      if (!raw.startsWith("#")) raw = `#${raw}`;
+      if (/^#[0-9a-fA-F]{3}$/.test(raw)) {
+        raw = `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`;
+      }
+      if (!/^#[0-9a-fA-F]{6}$/.test(raw)) return "#000000";
+      return raw.toUpperCase();
+    }
+
+    function degToRad(value) {
+      return value * Math.PI / 180;
+    }
+
+    function distance(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    canvas.addEventListener("pointerdown", canvasPointerDown);
+    canvas.addEventListener("pointermove", canvasPointerMove);
+    canvas.addEventListener("pointerup", canvasPointerUp);
+    canvas.addEventListener("pointercancel", canvasPointerUp);
+    canvas.addEventListener("dblclick", canvasDoubleClick);
+
+    initSwatches();
+    initFonts();
+    bindForm();
+    setupCanvas();
+    document.fonts.ready.then(render);
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
